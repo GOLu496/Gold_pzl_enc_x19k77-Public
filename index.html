@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>India Famous Architectures Map</title>
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; width: 100%; }
+        #zoomBox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            background: white;
+            padding: 5px 12px;
+            border: 1px solid #000;
+            border-radius: 4px;
+            font-weight: bold;
+            user-select: none;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+        }
+        .info {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+        .label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="zoomBox">Zoom: 0%</div>
+<div id="map"></div>
+
+<div class="info">
+    <span class="label">Selected Monument:</span>
+    <span id="selectedMonument">None</span>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    const map = L.map('map').setView([20.59, 78.96], 5);
+    const maxZoom = 19;
+    const minZoom = 5;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const zoomBox = document.getElementById('zoomBox');
+    const selectedMonumentEl = document.getElementById('selectedMonument');
+
+    function zoomToPercent(zoom) {
+        return Math.round(((zoom - minZoom) / (maxZoom - minZoom)) * 100);
+    }
+
+    function updateZoomBox() {
+        const zoom = map.getZoom();
+        zoomBox.innerText = 'Zoom: ' + zoomToPercent(zoom) + '%';
+    }
+
+    map.on('zoomend', () => {
+        updateZoomBox();
+        updateMarkersVisibility();
+    });
+
+    updateZoomBox();
+
+   const monuments = [
+  // Uttar Pradesh
+  { name: "Taj Mahal", lat: 27.1751, lng: 78.0421,
+    img: "https://upload.wikimedia.org/wikipedia/commons/d/da/Taj-Mahal.jpg" }, // [web:25]
+  { name: "Agra Fort", lat: 27.1795, lng: 78.0211,
+    img: "https://upload.wikimedia.org/wikipedia/commons/1/12/Agra_Fort_India_2013.jpg" }, // [web:29]
+  { name: "Fatehpur Sikri", lat: 27.0937, lng: 77.6600,
+    img: "https://upload.wikimedia.org/wikipedia/commons/1/19/Panch_Mahal%2C_Fatehpur_Sikri.jpg" }, // [web:29]
+  { name: "Varanasi Ghats", lat: 25.3069, lng: 83.0093,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Varanasi_Ghats.jpg" }, // [web:37]
+  { name: "Jhansi Fort", lat: 25.4580, lng: 78.5760,
+    img: "https://upload.wikimedia.org/wikipedia/commons/f/fc/Jhansi_Fort_2012.jpg" }, // [web:37]
+
+  // Delhi
+  { name: "Red Fort (Lal Qila)", lat: 28.6562, lng: 77.2410,
+    img: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Lal_Qila_-_Red_Fort_(3).jpg" }, // [web:25]
+  { name: "Qutub Minar", lat: 28.5244, lng: 77.1855,
+    img: "https://upload.wikimedia.org/wikipedia/commons/8/8e/Qutub_Minar_2013-03.jpg" }, // [web:25]
+  { name: "Humayun’s Tomb", lat: 28.5933, lng: 77.2507,
+    img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/Humayun%27s_Tomb%2C_Delhi%2C_India_02.jpg" }, // [web:29]
+  { name: "India Gate", lat: 28.6129, lng: 77.2295,
+    img: "https://upload.wikimedia.org/wikipedia/commons/f/f9/India_Gate_in_New_Delhi_03-2016_img3.jpg" }, // [web:25]
+  { name: "Lotus Temple", lat: 28.5535, lng: 77.2588,
+    img: "https://upload.wikimedia.org/wikipedia/commons/f/fc/Lotus_temple_Delhi.jpg" }, // [web:37]
+  { name: "Jama Masjid Delhi", lat: 28.6507, lng: 77.2334,
+    img: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Jama_Masjid_-_In_the_Evening.jpg" }, // [web:37]
+  { name: "Jantar Mantar Delhi", lat: 28.6271, lng: 77.2166,
+    img: "https://upload.wikimedia.org/wikipedia/commons/6/6d/Jantar_Mantar%2C_New_Delhi.jpg" }, // [web:33]
+
+  // Rajasthan
+  { name: "Hawa Mahal", lat: 26.9239, lng: 75.8267,
+    img: "https://upload.wikimedia.org/wikipedia/commons/c/c4/Hawa_Mahal_in_Jaipur_2011_11.jpg" }, // [web:25]
+  { name: "Amer Fort", lat: 26.9855, lng: 75.8513,
+    img: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amber_Fort%2C_Jaipur%2C_Rajasthan.jpg" }, // [web:25]
+  { name: "City Palace Jaipur", lat: 26.9260, lng: 75.8235,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Jaipur_City_Palace.jpg" }, // [web:37]
+  { name: "Jantar Mantar Jaipur", lat: 26.9248, lng: 75.8267,
+    img: "https://upload.wikimedia.org/wikipedia/commons/7/7f/Jantar_Mantar%2C_Jaipur%2C_India.jpg" }, // [web:33]
+  { name: "Mehrangarh Fort", lat: 26.2980, lng: 73.0186,
+    img: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Mehrangarh_Fort_Jodhpur.jpg" }, // [web:37]
+  { name: "Umaid Bhawan Palace", lat: 26.2978, lng: 73.0479,
+    img: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Umaid_Bhavan_Palace_Jodhpur.jpg" }, // [web:37]
+  { name: "Jaisalmer Fort", lat: 26.9124, lng: 70.9120,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/02/Jaisalmer_Fort_2011.jpg" }, // [web:37]
+  { name: "Chittorgarh Fort", lat: 24.8892, lng: 74.6463,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Chittorgarh_Fort.jpg" }, // [web:33]
+  { name: "Kumbhalgarh Fort", lat: 25.1473, lng: 73.5836,
+    img: "https://upload.wikimedia.org/wikipedia/commons/3/3b/Kumbhalgarh_fort.jpg" }, // [web:33]
+
+  // Maharashtra
+  { name: "Gateway of India", lat: 18.9220, lng: 72.8347,
+    img: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Gateway_of_India_Mumbai_03-2016_img3.jpg" }, // [web:25]
+  { name: "Chhatrapati Shivaji Maharaj Terminus", lat: 18.9398, lng: 72.8355,
+    img: "https://upload.wikimedia.org/wikipedia/commons/b/b0/CSMT_Mumbai.jpg" }, // [web:29]
+  { name: "Elephanta Caves", lat: 18.9633, lng: 72.9316,
+    img: "https://upload.wikimedia.org/wikipedia/commons/5/5e/Elephanta_Caves.jpg" }, // [web:33]
+  { name: "Ajanta Caves", lat: 20.5520, lng: 75.7033,
+    img: "https://upload.wikimedia.org/wikipedia/commons/1/16/Ajanta_cave_26_chaitya.JPG" }, // [web:33]
+  { name: "Ellora Caves", lat: 20.0269, lng: 75.1770,
+    img: "https://upload.wikimedia.org/wikipedia/commons/8/80/Ellora_Caves%2C_Aurangabad%2C_Maharashtra%2C_India_1.jpg" }, // [web:33]
+  { name: "Shaniwar Wada", lat: 18.5195, lng: 73.8553,
+    img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/Shaniwar_Wada_Pune.jpg" }, // [web:37]
+
+  // West Bengal
+  { name: "Victoria Memorial", lat: 22.5448, lng: 88.3426,
+    img: "https://upload.wikimedia.org/wikipedia/commons/5/57/Victoria_Memorial%2C_Kolkata_2018-03-18_IMG_1535.jpg" }, // [web:25]
+  { name: "Howrah Bridge", lat: 22.5850, lng: 88.3468,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/04/Howrah_Bridge_at_night.jpg" }, // [web:37]
+  { name: "Dakshineswar Kali Temple", lat: 22.6557, lng: 88.3568,
+    img: "https://upload.wikimedia.org/wikipedia/commons/6/6c/Dakshineswar_Kali_Temple_2019.jpg" }, // [web:37]
+  { name: "Belur Math", lat: 22.6325, lng: 88.3563,
+    img: "https://upload.wikimedia.org/wikipedia/commons/3/3b/Belur_Math_Temple.jpg" }, // [web:37]
+
+  // Tamil Nadu
+  { name: "Meenakshi Amman Temple", lat: 9.9192, lng: 78.1198,
+    img: "https://upload.wikimedia.org/wikipedia/commons/3/3a/Meenakshi_Temple_Towers_at_Night.jpg" }, // [web:25]
+  { name: "Brihadeeswarar Temple (Thanjavur)", lat: 10.7850, lng: 79.1378,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Brihadeeswarar_Temple_Thanjavur.jpg" }, // [web:33]
+  { name: "Mahabalipuram Shore Temple", lat: 12.6160, lng: 80.1990,
+    img: "https://upload.wikimedia.org/wikipedia/commons/9/99/Shore_Temple%2C_Mahabalipuram.jpg" }, // [web:33]
+  { name: "Ramanathaswamy Temple Rameswaram", lat: 9.2881, lng: 79.3129,
+    img: "https://upload.wikimedia.org/wikipedia/commons/6/6b/Ramanathaswamy_temple_corridor.jpg" }, // [web:37]
+
+  // Karnataka
+  { name: "Mysore Palace", lat: 12.3052, lng: 76.6551,
+    img: "https://upload.wikimedia.org/wikipedia/commons/7/7c/Mysore_Palace_Bright_2011.JPG" }, // [web:25]
+  { name: "Hampi Group of Monuments", lat: 15.3350, lng: 76.4600,
+    img: "https://upload.wikimedia.org/wikipedia/commons/9/91/Virupaksha_Temple%2C_Hampi.jpg" }, // [web:33]
+  { name: "Gol Gumbaz", lat: 16.8304, lng: 75.7390,
+    img: "https://upload.wikimedia.org/wikipedia/commons/3/39/Gol_Gumbaz%2C_Bijapur.jpg" }, // [web:37]
+  { name: "Badami Cave Temples", lat: 15.9149, lng: 75.6768,
+    img: "https://upload.wikimedia.org/wikipedia/commons/1/1b/Badami_cave_temple_3.jpg" }, // [web:37]
+
+  // Kerala
+  { name: "Padmanabhaswamy Temple", lat: 8.4828, lng: 76.9431,
+    img: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Sree_Padmanabhaswamy_temple%2C_Tiruvananthapuram.jpg" }, // [web:37]
+  { name: "Bekal Fort", lat: 12.3862, lng: 75.0349,
+    img: "https://upload.wikimedia.org/wikipedia/commons/3/3a/Bekal_Fort_Kerala.jpg" }, // [web:37]
+  { name: "Mattancherry Palace", lat: 9.9633, lng: 76.2425,
+    img: "https://upload.wikimedia.org/wikipedia/commons/2/2c/Mattancherry_Palace.jpg" }, // [web:37]
+
+  // Andhra Pradesh / Telangana
+  { name: "Charminar", lat: 17.3616, lng: 78.4747,
+    img: "https://upload.wikimedia.org/wikipedia/commons/4/4a/Charminar_03-2016_img2.jpg" }, // [web:25]
+  { name: "Golconda Fort", lat: 17.3833, lng: 78.4011,
+    img: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Golconda_Fort%2C_Hyderabad.jpg" }, // [web:37]
+  { name: "Thousand Pillar Temple (Warangal)", lat: 17.9726, lng: 79.5941,
+    img: "https://upload.wikimedia.org/wikipedia/commons/8/82/Thousand_pillar_temple_warangal.jpg" }, // [web:37]
+  { name: "Lepakshi Temple", lat: 13.8043, lng: 77.6092,
+    img: "https://upload.wikimedia.org/wikipedia/commons/2/2a/Veerabhadra_Temple_Lepakshi.jpg" }, // [web:37]
+
+  // Punjab / North
+  { name: "Golden Temple Amritsar", lat: 31.6200, lng: 74.8765,
+    img: "https://upload.wikimedia.org/wikipedia/commons/5/55/Golden_Temple_in_Amritsar_5.JPG" }, // [web:25]
+  { name: "Jallianwala Bagh", lat: 31.6206, lng: 74.8790,
+    img: "https://upload.wikimedia.org/wikipedia/commons/6/6c/Jallianwala_Bagh_Memorial.jpg" }, // [web:37]
+  { name: "Rock Garden Chandigarh", lat: 30.7525, lng: 76.8100,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/06/Rock_Garden_Chandigarh.jpg" }, // [web:37]
+
+  // Gujarat
+  { name: "Rani ki Vav Patan", lat: 23.8589, lng: 72.1010,
+    img: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Rani_ki_vav_09.jpg" }, // [web:33]
+  { name: "Somnath Temple", lat: 20.8880, lng: 70.4012,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/05/Somnath_temple.jpg" }, // [web:37]
+  { name: "Sabarmati Ashram", lat: 23.0608, lng: 72.5800,
+    img: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Sabarmati_Ashram_Ahmedabad.jpg" }, // [web:37]
+  { name: "Sun Temple Modhera", lat: 23.5925, lng: 72.1408,
+    img: "https://upload.wikimedia.org/wikipedia/commons/6/6d/Sun_Temple%2C_Modhera.jpg" }, // [web:37]
+
+  // Odisha
+  { name: "Konark Sun Temple", lat: 19.8874, lng: 86.0940,
+    img: "https://upload.wikimedia.org/wikipedia/commons/d/d3/Konark_Sun_Temple%2C_Odisha%2C_India.JPG" }, // [web:25]
+  { name: "Jagannath Temple Puri", lat: 19.8048, lng: 85.8174,
+    img: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Jagannath_Temple%2C_Puri.jpg" }, // [web:37]
+
+  // Bihar / MP
+  { name: "Mahabodhi Temple Bodh Gaya", lat: 24.6961, lng: 84.9915,
+    img: "https://upload.wikimedia.org/wikipedia/commons/b/bf/Mahabodhi_Temple%2C_Bodh_Gaya.jpg" }, // [web:33]
+  { name: "Nalanda Mahavihara", lat: 25.1367, lng: 85.4433,
+    img: "https://upload.wikimedia.org/wikipedia/commons/3/36/Nalanda_University_India_ruins.jpg" }, // [web:33]
+  { name: "Sanchi Stupa", lat: 23.4863, lng: 77.7395,
+    img: "https://upload.wikimedia.org/wikipedia/commons/4/4b/Sanchi_Stupa.jpg" } // [web:33]
+];
+  
+    const markerObjects = [];
+
+    function createImageMarker(lat, lng, imgURL, title) {
+        const icon = L.icon({
+            iconUrl: imgURL,
+            iconSize: [45, 45],
+            iconAnchor: [22, 45],
+            popupAnchor: [0, -45]
+        });
+
+        const marker = L.marker([lat, lng], { icon, title });
+        marker.bindPopup(`<b>${title}</b><br><img src="${imgURL}" alt="${title}" width="150" />`);
+        marker.on('click', () => {
+            selectedMonumentEl.innerText = title;
+        });
+
+        markerObjects.push(marker);
+    }
+
+    monuments.forEach(m => {
+        createImageMarker(m.lat, m.lng, m.img, m.name);
+    });
+
+    function updateMarkersVisibility() {
+        const zoom = map.getZoom();
+        const pct = zoomToPercent(zoom);
+
+        markerObjects.forEach(marker => {
+            if (pct >= 60) {
+                if (!map.hasLayer(marker)) {
+                    marker.addTo(map);
+                }
+            } else {
+                if (map.hasLayer(marker)) {
+                    map.removeLayer(marker);
+                }
+            }
+        });
+    }
+
+    updateMarkersVisibility();
+</script>
+
+</body>
+</html>
