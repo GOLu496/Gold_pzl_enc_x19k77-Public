@@ -44,7 +44,15 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-    const map = L.map('map').setView([20.59, 78.96], 5);
+    // **1. Smooth Zooming Control**
+    const map = L.map('map', {
+        zoomAnimation: true,
+        easeLinearity: 0.5,
+        // Zooming smoothness: reduced zoomDelta makes each zoom step smaller (e.g., 0.5 instead of 1)
+        zoomDelta: 0.5, 
+        zoomSnap: 0.5 // Ensures that small zoom steps are accepted
+    }).setView([20.59, 78.96], 5);
+    
     const maxZoom = 19;
     const minZoom = 5;
 
@@ -57,6 +65,7 @@
     const selectedMonumentEl = document.getElementById('selectedMonument');
 
     function zoomToPercent(zoom) {
+        // Calculate the percentage of zoom level within the min/max range
         return Math.round(((zoom - minZoom) / (maxZoom - minZoom)) * 100);
     }
 
@@ -67,13 +76,23 @@
 
     map.on('zoomend', () => {
         updateZoomBox();
-        updateMarkersVisibility();
+        updateMarkersVisibility(); // Call visibility check on zoom end
     });
 
     updateZoomBox();
 
+    // **Kodular Communication Function (Retained)**
+    window.AcknowledgeSelection = function(title) {
+        if (window.AppInventor) {
+            // Sends the selected name to Kodular's Web Viewer string
+            window.AppInventor.setWebViewString(title);
+        } else {
+            console.log("Selected monument sent to Kodular: " + title);
+        }
+    };
+    
    const monuments = [
-  // Uttar Pradesh
+    // Uttar Pradesh
   { name: "Taj Mahal", lat: 27.1751, lng: 78.0421,
     img: "1.png" },
   { name: "Agra Fort", lat: 27.1795, lng: 78.0211,
@@ -215,7 +234,7 @@
   { name: "Sanchi Stupa", lat: 23.4863, lng: 77.7395,
     img: "https://upload.wikimedia.org/wikipedia/commons/4/4b/Sanchi_Stupa.jpg" } // [web:33]
 ];
-  
+
     const markerObjects = [];
 
     function createImageMarker(lat, lng, imgURL, title) {
@@ -228,27 +247,34 @@
 
         const marker = L.marker([lat, lng], { icon, title });
         marker.bindPopup(`<b>${title}</b><br><img src="${imgURL}" alt="${title}" width="150" />`);
+        
         marker.on('click', () => {
             selectedMonumentEl.innerText = title;
+            window.AcknowledgeSelection(title); // Send data to Kodular
         });
 
         markerObjects.push(marker);
+        // Do not add to map yet, visibility is controlled by updateMarkersVisibility()
     }
 
     monuments.forEach(m => {
         createImageMarker(m.lat, m.lng, m.img, m.name);
     });
 
+    // **2. Marker Visibility Control (Re-added)**
     function updateMarkersVisibility() {
         const zoom = map.getZoom();
         const pct = zoomToPercent(zoom);
+        const visibilityThreshold = 60; // 60% zoom required for markers
 
         markerObjects.forEach(marker => {
-            if (pct >= 60) {
+            if (pct >= visibilityThreshold) {
+                // If zoom is >= 60% and marker is not on map, add it
                 if (!map.hasLayer(marker)) {
                     marker.addTo(map);
                 }
             } else {
+                // If zoom is < 60% and marker is on map, remove it
                 if (map.hasLayer(marker)) {
                     map.removeLayer(marker);
                 }
@@ -256,6 +282,7 @@
         });
     }
 
+    // Initial call to set correct visibility
     updateMarkersVisibility();
 </script>
 
